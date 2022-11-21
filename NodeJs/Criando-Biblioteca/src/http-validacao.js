@@ -2,6 +2,33 @@ function extraiLinks(arrLinks) {
 	return arrLinks.map((objetoLink) => Object.values(objetoLink).join());
 }
 
-export default function listaValidada(listaDeLinks) {
-	return extraiLinks(listaDeLinks);
+async function checaStatus(listaURLS) {
+	const arrStatus = await Promise.all(
+		listaURLS.map(async (url) => {
+			try {
+				const response = await fetch(url);
+				return response.status;
+			} catch (erro) {
+				return manejaErros(erro);
+			}
+		})
+	);
+	return arrStatus;
+}
+
+function manejaErros(erro) {
+	if (erro.cause.code === "ENOTFOUND") {
+		return "Link não encontrado";
+	} else {
+		return "Ocorreu algum erro";
+	}
+}
+
+export default async function listaValidada(listaDeLinks) {
+	const links = extraiLinks(listaDeLinks);
+	const status = await checaStatus(links);
+	return listaDeLinks.map((objeto, indice) => ({
+		...objeto,
+		status: status[indice],
+	}));
 }
