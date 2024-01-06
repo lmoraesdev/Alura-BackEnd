@@ -1,0 +1,17 @@
+# Etapa de construção
+FROM node:18-slim as build
+WORKDIR /usr/src/api
+COPY . .
+COPY ./.env.production ./.env
+RUN npm install --quiet --no-optional --no-fund --loglevel=error
+RUN npm run build
+
+# Etapa de produção
+FROM node:18-slim
+WORKDIR /usr/src/api
+COPY --from=build /usr/src/api/dist ./dist
+COPY ./.env.production ./.env
+COPY package*.json ./
+RUN npm install --production --quiet --no-optional --no-fund --loglevel=error
+EXPOSE 3000
+CMD ["npm", "run", "start:prod"]
